@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop]
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mobile:
+    name: mobile (lint/typecheck)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Validate lint script exists
+        run: |
+          node -e "const s=require('./package.json').scripts||{}; if(!s.lint){console.error('Missing npm script: lint'); process.exit(1)}"
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck (if present)
+        run: npm run typecheck --if-present
