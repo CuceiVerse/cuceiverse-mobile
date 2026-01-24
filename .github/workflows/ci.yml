@@ -1,49 +1,26 @@
-name: CI
+name: ci
 
 on:
-  push:
-    branches: [develop]
   pull_request:
+    branches: [develop]
+  push:
     branches: [develop]
 
 jobs:
-  ci:
-    name: sanity-and-ci
+  validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-    
-
-      - name: Sanity check
+      - name: Validate required files exist
         run: |
-          echo "Repo: cuceiverse-mobile"
-          ls -la
-          test -f README.md && echo "README OK" || (echo "README missing" && exit 1)
+          set -euo pipefail
+          test -f README.md
+          test -f GIT_WORKFLOW.md
+          test -f VERSIONING.md
+          test -f CONVENTIONAL_COMMITS.md
+          test -f .github/PULL_REQUEST_TEMPLATE.md
 
-      - name: Install + Lint + Build (if package.json exists)
-        run: |
-          if [ -f package.json ]; then
-            npm ci
-
-            if node -e "const s=require('./package.json').scripts||{}; process.exit(s.lint?0:1)"; then
-              npm run lint
-            else
-              echo "No lint script; skipping lint."
-            fi
-
-            if node -e "const s=require('./package.json').scripts||{}; process.exit(s.build?0:1)"; then
-              npm run build
-            else
-              echo "No build script; skipping build."
-            fi
-          else
-            echo "No package.json detected. Mobile app not initialized yet; CI runs sanity only."
-          fi
+      - name: Summary
+        run: echo "OK - docs/standards repository"
